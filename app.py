@@ -202,7 +202,7 @@ high = float(map_data["Percentage difference"].max())
 if low == high:
     high = low + 0.01
 
-fig = px.choropleth_map(
+fig = px.choropleth(
     map_data,
     geojson=region_geojson,
     locations="Region Name",
@@ -218,9 +218,6 @@ fig = px.choropleth_map(
         "Percentage difference": ":.2f",
         "Authorities": True,
     },
-    map_style="open-street-map",
-    center={"lat": 52.7, "lon": -1.7},
-    zoom=4.6,
     opacity=0.75,
     labels={
         "Percentage difference": "Difference (%)",
@@ -230,12 +227,13 @@ fig = px.choropleth_map(
         "Authorities": "Local authorities",
     },
 )
+fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(
     height=600,
     margin={"r": 0, "t": 5, "l": 0, "b": 0},
     coloraxis_colorbar_title="Difference (%)",
 )
-fig.update_traces(marker_line_width=1.4, marker_line_color="#333333")
+fig.update_traces(marker_line_width=1.4, marker_line_color="#333333", marker_opacity=0.8)
 
 clicked = plotly_events(
     fig,
