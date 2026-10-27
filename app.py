@@ -219,8 +219,8 @@ fig = px.choropleth_map(
         "Authorities": True,
     },
     map_style="open-street-map",
-    map_center={"lat": 52.7, "lon": -1.7},
-    map_zoom=4.6,
+    center={"lat": 52.7, "lon": -1.7},
+    zoom=4.6,
     opacity=0.75,
     labels={
         "Percentage difference": "Difference (%)",
