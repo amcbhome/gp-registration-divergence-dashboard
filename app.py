@@ -202,7 +202,7 @@ high = float(map_data["Percentage difference"].max())
 if low == high:
     high = low + 0.01
 
-fig = px.choropleth_mapbox(
+fig = px.choropleth_map(
     map_data,
     geojson=region_geojson,
     locations="Region Name",
@@ -218,9 +218,9 @@ fig = px.choropleth_mapbox(
         "Percentage difference": ":.2f",
         "Authorities": True,
     },
-    mapbox_style="open-street-map",
-    center={"lat": 52.7, "lon": -1.7},
-    zoom=4.6,
+    map_style="open-street-map",
+    map_center={"lat": 52.7, "lon": -1.7},
+    map_zoom=4.6,
     opacity=0.75,
     labels={
         "Percentage difference": "Difference (%)",
