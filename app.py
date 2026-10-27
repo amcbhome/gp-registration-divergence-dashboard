@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 import streamlit as st
 from shapely.geometry import shape, mapping
 from shapely.ops import unary_union
-from streamlit_plotly_events import plotly_events
 
 st.set_page_config(
     page_title="GP Registration Divergence Dashboard",
@@ -240,21 +239,24 @@ fig.update_layout(
     margin={"r": 0, "t": 5, "l": 0, "b": 0},
 )
 
-clicked = plotly_events(
-    fig,
-    click_event=True,
-    select_event=False,
-    hover_event=False,
-    override_height=600,
-    key="england_region_map",
+# Render the Plotly geographic chart directly in Streamlit. This avoids
+# compatibility issues with third-party click-event components.
+st.plotly_chart(fig, use_container_width=True, key="england_region_map")
+
+available_regions = [
+    str(name) for name in regional["Region Name"].dropna().tolist()
+]
+previous_selection = st.session_state.get("selected_region")
+default_index = (
+    available_regions.index(previous_selection)
+    if previous_selection in available_regions else 0
 )
-
-if clicked:
-    region_clicked = clicked[0].get("location")
-    if region_clicked in REGION_ORDER:
-        st.session_state["selected_region"] = region_clicked
-
-selected_region = st.session_state.get("selected_region")
+selected_region = st.selectbox(
+    "Choose a region to inspect its local authorities",
+    available_regions,
+    index=default_index,
+    key="selected_region_picker",
+)
 
 if selected_region:
     selected = regional[regional["Region Name"].astype(str) == selected_region]
