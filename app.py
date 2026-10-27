@@ -176,11 +176,33 @@ regional["Region Name"] = pd.Categorical(
 regional = regional.sort_values("Region Name").reset_index(drop=True)
 
 try:
+    # Some hosted deployments can occasionally read a large GeoJSON file
+    # incompletely. If the local copy is not valid JSON, retry from the
+    # repository's raw file URL before giving up.
+    try:
+        json.loads(geo_bytes.decode("utf-8-sig"))
+    except Exception:
+        import requests
+
+        boundary_url = (
+            "https://raw.githubusercontent.com/amcbhome/"
+            "gp-registration-divergence-dashboard/main/"
+            "data/local_authority_boundaries.geojson"
+        )
+        response = requests.get(boundary_url, timeout=60)
+        response.raise_for_status()
+        geo_bytes = response.content
+        json.loads(geo_bytes.decode("utf-8-sig"))
+
     region_geojson = build_region_geojson(
         geo_bytes, tuple(zip(df["Local Authority Code"], df["Region Name"]))
     )
 except Exception as exc:
-    st.error(f"Could not prepare the map boundaries: {exc}")
+    st.error(
+        "Could not read the map boundary file as valid GeoJSON. "
+        f"File size read by the app: {len(geo_bytes):,} bytes. "
+        f"Details: {exc}"
+    )
     st.stop()
 
 geo_regions = [f["properties"]["Region Name"] for f in region_geojson["features"]]
