@@ -3,6 +3,7 @@ import json
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 from shapely.geometry import shape, mapping
 from shapely.ops import unary_union
@@ -202,38 +203,42 @@ high = float(map_data["Percentage difference"].max())
 if low == high:
     high = low + 0.01
 
-fig = px.choropleth(
-    map_data,
-    geojson=region_geojson,
-    locations="Region Name",
-    featureidkey="properties.Region Name",
-    color="Percentage difference",
-    color_continuous_scale="YlOrRd",
-    range_color=(low, high),
-    hover_name="Region Name",
-    hover_data={
-        "Census": ":,.0f",
-        "Registrations": ":,.0f",
-        "Difference": ":,.0f",
-        "Percentage difference": ":.2f",
-        "Authorities": True,
-    },
-    opacity=0.75,
-    labels={
-        "Percentage difference": "Difference (%)",
-        "Census": "Census population",
-        "Registrations": "GP registrations",
-        "Difference": "Difference",
-        "Authorities": "Local authorities",
-    },
+# Build the map directly with graph_objects to avoid version-specific
+# Plotly Express argument errors in hosted environments.
+map_data = map_data.copy()
+map_data["Region Name"] = map_data["Region Name"].astype(str)
+map_data["hover_text"] = map_data.apply(
+    lambda r: (
+        f"<b>{r['Region Name']}</b><br>"
+        f"Census population: {r['Census']:,.0f}<br>"
+        f"GP registrations: {r['Registrations']:,.0f}<br>"
+        f"Difference: {r['Difference']:+,.0f}<br>"
+        f"Difference: {r['Percentage difference']:+.2f}%<br>"
+        f"Local authorities: {r['Authorities']}"
+    ),
+    axis=1,
+)
+fig = go.Figure(
+    go.Choropleth(
+        geojson=region_geojson,
+        locations=map_data["Region Name"],
+        z=map_data["Percentage difference"],
+        featureidkey="properties.Region Name",
+        colorscale="YlOrRd",
+        zmin=low,
+        zmax=high,
+        marker_line_width=1.2,
+        marker_line_color="#333333",
+        customdata=map_data[["Region Name", "hover_text"]].to_numpy(),
+        hovertemplate="%{customdata[1]}<extra></extra>",
+        colorbar={"title": "Difference (%)"},
+    )
 )
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(
     height=600,
     margin={"r": 0, "t": 5, "l": 0, "b": 0},
-    coloraxis_colorbar_title="Difference (%)",
 )
-fig.update_traces(marker_line_width=1.4, marker_line_color="#333333", marker_opacity=0.8)
 
 clicked = plotly_events(
     fig,
